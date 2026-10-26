@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אפליקציית תזונה ים-תיכונית טבעונית (DASH)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts - Rubin / Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        medGreen: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                        },
+                        medOlive: {
+                            500: '#84cc16',
+                            600: '#65a30d',
+                        },
+                        medTerracotta: {
+                            500: '#ea580c',
+                            600: '#c2410c',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Rubik', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-gradient-to-r from-teal-800 to-emerald-700 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <span class="p-2 bg-white/10 rounded-xl text-emerald-300 text-xl">
+                    <i class="fa-solid font-bold fa-leaf"></i>
+                </span>
+                <div>
+                    <h1 class="font-bold text-lg sm:text-xl leading-tight">ים-תיכונית טבעונית + DASH</h1>
+                    <p class="text-xs text-emerald-100 hidden sm:block">תזונה עשירה בסיבים, דלת נתרן ובריאה ללב וללחץ הדם</p>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Trigger & Desktop Tabs -->
+            <nav class="hidden md:flex space-x-1 space-x-reverse bg-emerald-900/40 p-1 rounded-xl">
+                <button onclick="switchTab('tracker')" id="tab-tracker" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-white text-emerald-900 shadow">
+                    <i class="fa-solid fa-chart-pie ml-1.5"></i>מעקב יומי
+                </button>
+                <button onclick="switchTab('meals')" id="tab-meals" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-medium transition-all hover:bg-white/10 text-white">
+                    <i class="fa-solid fa-utensils ml-1.5"></i>תפריט ומתוכנן
+                </button>
+                <button onclick="switchTab('fibers')" id="tab-fibers" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-medium transition-all hover:bg-white/10 text-white">
+                    <i class="fa-solid fa-wheat-awn ml-1.5"></i>מדריך הסיבים
+                </button>
+                <button onclick="switchTab('guide')" id="tab-guide" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-medium transition-all hover:bg-white/10 text-white">
+                    <i class="fa-solid fa-heart-pulse ml-1.5"></i>עקרונות DASH
+                </button>
+            </nav>
+        </div>
+        <!-- Mobile Navigation Bar -->
+        <div class="md:hidden flex justify-around bg-emerald-900/60 p-2 text-xs border-t border-emerald-600/30">
+            <button onclick="switchTab('tracker')" id="mob-tab-tracker" class="flex flex-col items-center text-white font-bold">
+                <i class="fa-solid fa-chart-pie mb-1"></i>מעקב
+            </button>
+            <button onclick="switchTab('meals')" id="mob-tab-meals" class="flex flex-col items-center text-emerald-200">
+                <i class="fa-solid fa-utensils mb-1"></i>תפריטים
+            </button>
+            <button onclick="switchTab('fibers')" id="mob-tab-fibers" class="flex flex-col items-center text-emerald-200">
+                <i class="fa-solid fa-wheat-awn mb-1"></i>סיבים
+            </button>
+            <button onclick="switchTab('guide')" id="mob-tab-guide" class="flex flex-col items-center text-emerald-200">
+                <i class="fa-solid fa-heart-pulse mb-1"></i>DASH
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+
+        <!-- Tab 1: Daily Tracker & Fiber/Sodium Summary -->
+        <section id="content-tracker" class="space-y-6">
+            <!-- Welcome Alert / Fiber Question Quick Answer -->
+            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+                <div class="flex items-start space-x-3 space-x-reverse">
+                    <div class="p-3 bg-emerald-600 text-white rounded-xl text-xl mt-1 md:mt-0">
+                        <i class="fa-solid fa-circle-question"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-emerald-900 text-lg">האם צריך סיבים תזונתיים?</h2>
+                        <p class="text-sm text-emerald-800 leading-relaxed mt-0.5">
+                            <strong>חד משמעית כן!</strong> סיבים הם לב הדיאטה הים-תיכונית ודיאטת DASH. הם מורידים לחץ דם, מפחיתים ספיגת כולסטרול, מזינים את חיידקי המעי הטובים (מיקרוביום) ושומרים על תחושת שובע ואיזון סוכר.
+                        </p>
+                    </div>
+                </div>
+                <button onclick="switchTab('fibers')" class="whitespace-nowrap bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-sm px-4 py-2 rounded-xl transition shadow-sm">
+                    לקריאה מורחבת <i class="fa-solid fa-arrow-left mr-1 text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Overview Dashboard Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- Fiber Card -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-slate-500 text-sm font-medium">סיבים תזונתיים (יומי)</span>
+                            <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-semibold">יעד: 30-45 גרם</span>
+                        </div>
+                        <div class="flex items-baseline justify-between mb-2">
+                            <span id="fiber-count-text" class="text-3xl font-bold text-slate-800">0</span>
+                            <span class="text-slate-500 text-sm">גרם מתוך <span id="fiber-target-text">38</span>g</span>
+                        </div>
+                        <!-- Progress bar -->
+                        <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                            <div id="fiber-progress" class="bg-amber-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <p id="fiber-feedback" class="text-xs text-slate-500 mt-4 flex items-center">
+                        <i class="fa-solid fa-circle-info ml-1 text-amber-500"></i> הוסף קטניות, דגנים מלאים וירקות להגעת היעד
+                    </p>
+                </div>
+
+                <!-- Sodium Card (DASH focus) -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-slate-500 text-sm font-medium">נתרן / מלח (DASH)</span>
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-semibold">מקסימום: 1,500-2,300 מ"ג</span>
+                        </div>
+                        <div class="flex items-baseline justify-between mb-2">
+                            <span id="sodium-count-text" class="text-3xl font-bold text-slate-800">0</span>
+                            <span class="text-slate-500 text-sm">מ"ג מתוך <span id="sodium-limit-text">1500</span>mg</span>
+                        </div>
+                        <!-- Progress bar -->
+                        <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                            <div id="sodium-progress" class="bg-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <p id="sodium-feedback" class="text-xs text-emerald-600 mt-4 flex items-center">
+                        <i class="fa-solid fa-shield-halved ml-1"></i> רמת נתרן מעולה לשמירה על לחץ דם תקין!
+                    </p>
+                </div>
+
+                <!-- Whole Plant Foods Ratio -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-slate-500 text-sm font-medium">חלבון מן הצומח ושומן בריא</span>
+                            <span class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-semibold">איכות התזונה</span>
+                        </div>
+                        <div class="space-y-2 mt-2">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span>קטניות (חומוס, עדשים, שעועית)</span>
+                                <span id="legumes-count" class="text-emerald-700">0/3 מנות</span>
+                            </div>
+                            <div class="flex justify-between text-xs font-medium">
+                                <span>שומנים בריאים (שמן זית, טחינה, אגוזים)</span>
+                                <span id="fats-count" class="text-emerald-700">0/3 מנות</span>
+                            </div>
+                            <div class="flex justify-between text-xs font-medium">
+                                <span>ירקות ופירות</span>
+                                <span id="veg-count" class="text-emerald-700">0/6 מנות</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-3 pt-2 border-t border-slate-100">
+                        דיאטה ים תיכונית מתבססת על מזון שלם ולא מעובד.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Food Log & Add Item Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Add Food Form -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 lg:col-span-1">
+                    <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center">
+                        <i class="fa-solid fa-square-plus text-emerald-600 ml-2"></i>הוסף מזון ליומן
+                    </h3>
+
+                    <form id="add-food-form" onsubmit="addFoodItem(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">בחר מזון מהרשימה או הזן אישי</label>
+                            <select id="preset-food-select" onchange="loadPresetData()" class="w-full text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="">-- בחר מזון ים-תיכוני טבעוני --</option>
+                                <option value="lentils">עדשים מבושלות (כוס / ~200 גרם)</option>
+                                <option value="chickpeas">חומוס מבושל (כוס / ~160 גרם)</option>
+                                <option value="tahini">טחינה גולמית משומשום מלא (2 כפות)</option>
+                                <option value="olive_oil">שמן זית כתית מעולה (1 כף)</option>
+                                <option value="oats">שיבולת שועל מלאה (1/2 כוס יבשה)</option>
+                                <option value="quinoa">קינואה מבושלת (כוס)</option>
+                                <option value="walnuts">אגוזי מלך (חופן / 30 גרם)</option>
+                                <option value="salad">סלט ירקות ים-תיכוני (קערה בינונית)</option>
+                                <option value="tofu">טופו טבעי (100 גרם)</option>
+                                <option value="whole_bread">לחם דגנים מלאים קלוי (2 פרוסות)</option>
+                                <option value="chia">זרעי צ'יה (1 כף)</option>
+                                <option value="almonds">שקדים טבעיים (25 גרם)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">שם המאכל</label>
+                            <input type="text" id="food-name" placeholder="למשל: תבשיל עדשים וירקות" required class="w-full text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">סיבים (גרם)</label>
+                                <input type="number" step="0.1" id="food-fiber" placeholder="0" required class="w-full text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">נתרן (מ"ג)</label>
+                                <input type="number" id="food-sodium" placeholder="0" required class="w-full text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">קטגוריית מזון</label>
+                            <select id="food-category" class="w-full text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="legume">קטניות (עדשים/חומוס/שעועית)</option>
+                                <option value="grain">דגנים מלאים</option>
+                                <option value="fat">שומן בריא (שמן זית/טחינה/אגוזים)</option>
+                                <option value="veg">ירקות ופירות</option>
+                                <option value="other">חלבון מן הצומח / אחר</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-md shadow-emerald-600/20 text-sm flex items-center justify-center">
+                            <i class="fa-solid fa-plus ml-2"></i>הוסף לתפריט היומי
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Today's Log Table -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 lg:col-span-2 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-800 text-base flex items-center">
+                                <i class="fa-solid fa-list-check text-emerald-600 ml-2"></i>יומן אכילה להיום
+                            </h3>
+                            <button onclick="clearTodayLog()" class="text-xs text-rose-500 hover:text-rose-700 font-medium transition">
+                                <i class="fa-solid fa-trash-can ml-1"></i>איפוס יומן
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto custom-scrollbar max-h-80">
+                            <table class="w-full text-right border-collapse text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-slate-400 text-xs font-semibold">
+                                        <th class="py-2.5 px-3">מאכל</th>
+                                        <th class="py-2.5 px-3">קטגוריה</th>
+                                        <th class="py-2.5 px-3 text-center">סיבים</th>
+                                        <th class="py-2.5 px-3 text-center">נתרן</th>
+                                        <th class="py-2.5 px-3 text-center">פעולה</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="food-log-body" class="divide-y divide-slate-100">
+                                    <!-- Rows added dynamically -->
+                                    <tr id="empty-log-row">
+                                        <td colspan="5" class="py-8 text-center text-slate-400 text-sm">
+                                            טרם הוספת מאכלים היום. בחר מהרשימה או הזן מזון חדש.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Daily Sodium Warning Note -->
+                    <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600 ml-2 text-base"></i>
+                        <span><strong>טיפ DASH:</strong> הימנע משימוש במרק עוף אבקה, רטבים קנויים ומזון משומר שאינו נשטף. העדף תבלינים טבעיים (כמומין, שום, אורגנו, לימון).</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Meal Plans & Mediterranean Vegan Recipes -->
+        <section id="content-meals" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <div class="max-w-3xl">
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">תפריט יומי לדוגמה: ים-תיכוני טבעוני + DASH</h2>
+                    <p class="text-slate-600 text-sm leading-relaxed">
+                        תפריט זה מאוזן באופן מושלם: עשיר בסיבים תזונתיים מסיסים ושאינם מסיסים, דל נתרן (מתחת ל-1500 מ"ג נתרן ביום), עשיר באשלגן, מגנזיום וחלבון מן הצומח.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                    <!-- Meal 1 -->
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-emerald-800 font-bold text-sm mb-2 border-b border-emerald-200 pb-2">
+                                <span><i class="fa-solid fa-sun ml-1.5 text-amber-500"></i>ארוחת בוקר</span>
+                                <span class="text-xs font-normal text-slate-500">~12g סיבים</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-1">דלת שיבולת שועל ופירות יער</h4>
+                            <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                <li>1/2 כוס שיבולת שועל מלאה מבושלת במים/חלב סויה ללא סוכר</li>
+                                <li>1 כף זרעי צ'יה / זרעי פשתן טחונים</li>
+                                <li>חופן אגוזי מלך קצוצים</li>
+                                <li>1/2 כוס פירות יער או תפוח עץ חתוך</li>
+                                <li>קורט קינמון (ללא סוכר מוסף)</li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-2 border-t border-slate-200 text-xs text-emerald-700 flex justify-between">
+                            <span>נתרן: ~15 מ"ג</span>
+                            <span class="font-semibold">סיבים: גבוה</span>
+                        </div>
+                    </div>
+
+                    <!-- Meal 2 -->
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-emerald-800 font-bold text-sm mb-2 border-b border-emerald-200 pb-2">
+                                <span><i class="fa-solid fa-utensils ml-1.5 text-emerald-600"></i>ארוחת צהריים</span>
+                                <span class="text-xs font-normal text-slate-500">~16g סיבים</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-1">מג'דרה עדשים חומות & סלט עשיר</h4>
+                            <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                <li>1 כוס מג'דרה מאורז מלא ועדשים חומות/שחורות</li>
+                                <li>סלט קצוץ קלאסי (עגבנייה, מלפפון, פטרוזיליה, בצל סגול)</li>
+                                <li>1 כף שמן זית כתית מעולה + מיץ לימון טרי</li>
+                                <li>2 כפות טחינה גולמית משומשום מלא (ללא מלח מוסף)</li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-2 border-t border-slate-200 text-xs text-emerald-700 flex justify-between">
+                            <span>נתרן: ~120 מ"ג</span>
+                            <span class="font-semibold">סיבים: שיא</span>
+                        </div>
+                    </div>
+
+                    <!-- Meal 3 -->
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-emerald-800 font-bold text-sm mb-2 border-b border-emerald-200 pb-2">
+                                <span><i class="fa-solid fa-cookie-bite ml-1.5 text-amber-600"></i>ארוחת ביניים</span>
+                                <span class="text-xs font-normal text-slate-500">~6g סיבים</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-1">חטיף אנרגיה ים-תיכוני</h4>
+                            <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                <li>10-12 שקדים טבעיים / אגוזי לוז</li>
+                                <li>1 פרי העונה (אגס, תאנה, או תפוז)</li>
+                                <li>מקלות גזר וקולרבי שטופים</li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-2 border-t border-slate-200 text-xs text-emerald-700 flex justify-between">
+                            <span>נתרן: ~10 מ"ג</span>
+                            <span class="font-semibold">סיבים: בינוני</span>
+                        </div>
+                    </div>
+
+                    <!-- Meal 4 -->
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-emerald-800 font-bold text-sm mb-2 border-b border-emerald-200 pb-2">
+                                <span><i class="fa-solid fa-moon ml-1.5 text-indigo-500"></i>ארוחת ערב</span>
+                                <span class="text-xs font-normal text-slate-500">~14g סיבים</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-1">תבשיל חומוס, טופו ותרד</h4>
+                            <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                <li>100 גרם טופו מוקפץ עם שום, כורכום וכמומין</li>
+                                <li>3/4 כוס גרגירי חומוס מבושלים</li>
+                                <li>תרד טרי מוקפץ בשמן זית</li>
+                                <li>1/2 כוס קינואה או בולגור מלא</li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-2 border-t border-slate-200 text-xs text-emerald-700 flex justify-between">
+                            <span>נתרן: ~180 מ"ג</span>
+                            <span class="font-semibold">סיבים: גבוה מאוד</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List of Recommended Vegan Mediterranean Foods -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Good Foods Card -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <h3 class="font-bold text-emerald-800 text-base mb-3 flex items-center">
+                        <i class="fa-solid fa-circle-check text-emerald-500 ml-2"></i>מזונות להתבסס עליהם (מה לאכול בשפע)
+                    </h3>
+                    <ul class="space-y-2.5 text-sm text-slate-700">
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-seedling text-emerald-600 mt-1 ml-2 text-xs"></i>
+                            <div><strong>קטניות (חלבון וסיבים):</strong> עדשים ירוקות/שחורות/אדומות, חומוס, שעועית לבנה/אדומה, פול, אדממה, טופו.</div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-wheat-awn text-emerald-600 mt-1 ml-2 text-xs"></i>
+                            <div><strong>דגנים מלאים:</strong> אורז מלא/בר, שיבולת שועל, קינואה, בורגול מלא, כוסמת, לחם מחמצת מלא.</div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-droplet text-emerald-600 mt-1 ml-2 text-xs"></i>
+                            <div><strong>שומנים בריאים (איכותיים):</strong> שמן זית כתית מעולה, טחינה גולמית משומשום מלא, אבוקדו, אגוזי מלך, שקדים, זרעי פשתן וצ'יה.</div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-carrot text-emerald-600 mt-1 ml-2 text-xs"></i>
+                            <div><strong>ירקות ופירות בשלל צבעים:</strong> עגבניות, שום, בצל, עלים ירוקים (תרד, קייל, פטרוזיליה), חצילים, קישואים, פירות יער.</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Foods to limit/avoid -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <h3 class="font-bold text-rose-800 text-base mb-3 flex items-center">
+                        <i class="fa-solid fa-circle-xmark text-rose-500 ml-2"></i>מה לצמצם ולמנוע (דגש DASH ו-Sodium)
+                    </h3>
+                    <ul class="space-y-2.5 text-sm text-slate-700">
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-ban text-rose-500 mt-1 ml-2 text-xs"></i>
+                            <div><strong>מלח ונתרן מוסף:</strong> חטיפים מלוחים, רטבים מעובדים (סויה תעשייתית, קטשופ), מיונז, שימורים שאינם נשטפים.</div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-ban text-rose-500 mt-1 ml-2 text-xs"></i>
+                            <div><strong>מזון מעובד טבעוני:</strong> תחליפי בשר אולטרה-מעובדים (נקניקיות טבעוניות, המבורגרים קפואים עתירי נתרן ושומן רווי).</div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-ban text-rose-500 mt-1 ml-2 text-xs"></i>
+                            <div><strong>סוכרים פשוטים:</strong> שתייה מתוקה, מיצים טבעיים ממותקים, מאפים תעשייתיים, ממתקים.</div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-ban text-rose-500 mt-1 ml-2 text-xs"></i>
+                            <div><strong>שומן טראנס ושומן רווי מוקשה:</strong> מרגרינה, שמן דקלים, מוצרים מטוגנים בשמן עמוק.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: Detailed Fiber Guide & Deep Dive -->
+        <section id="content-fibers" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <div class="flex items-center space-x-3 space-x-reverse mb-4">
+                    <div class="p-3 bg-amber-100 text-amber-800 rounded-xl text-2xl">
+                        <i class="fa-solid fa-wheat-awn"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">הכל על סיבים תזונתיים בדיאטה ים-תיכונית טבעונית</h2>
+                        <p class="text-slate-500 text-sm">למה הם הכרחיים, איפה מוצאים אותם וכמה מומלץ לצרוך?</p>
+                    </div>
+                </div>
+
+                <div class="prose max-w-none text-slate-700 space-y-4 text-sm leading-relaxed">
+                    <div class="p-4 bg-emerald-50 rounded-xl border-r-4 border-emerald-600">
+                        <h3 class="font-bold text-emerald-900 text-base mb-1">התשובה הקצרה: כן, סיבים הם קריטיים!</h3>
+                        <p>
+                            בדיאטה ים-תיכונית וטבעונית (ובפרט לפי עקרונות ה-DASH), <strong>הסיבים התזונתיים הם הרכיב הפעיל המרכזי</strong> שמעניק לדיאטה את יתרונותיה הבריאותיים ללב, לכלי הדם ולמערכת העיכול.
+                        </p>
+                    </div>
+
+                    <h3 class="font-bold text-slate-800 text-base text-emerald-800 mt-4">1. למה סיבים תזונתיים כל כך חשובים בדיאטת DASH והורדת לחץ דם?</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-3">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-800 mb-1 flex items-center">
+                                <i class="fa-solid fa-heart-pulse text-rose-500 ml-1.5"></i>הפחתת לחץ דם
+                            </h4>
+                            <p class="text-xs text-slate-600">מחקרים מראים כי צריכה גבוהה של סיבים תזונתיים מסיסים משפרת את גמישות כלי הדם, מורידה תנגודת לאינסולין ומסייעת ישירות בהורדת לחץ דם סיסטולי ודיאסטולי.</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-800 mb-1 flex items-center">
+                                <i class="fa-solid fa-filter text-amber-500 ml-1.5"></i>ספיגת כולסטרול LDL
+                            </h4>
+                            <p class="text-xs text-slate-600">סיבים מסיסים (כמו בטא-גלוקן בשיבולת שועל וקטניות) נקשרים לחומצות מרה במעי ומפנים אותן מהגוף. הגוף משתמש בכולסטרול מהדם ליצירת חומצות מרה חדשות, וכך רמת הכולסטרול הרע יורדת.</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-800 mb-1 flex items-center">
+                                <i class="fa-solid fa-bacteria text-emerald-600 ml-1.5"></i>בריאות המיקרוביום
+                            </h4>
+                            <p class="text-xs text-slate-600">הסיבים מהווים "פרביוטיקה" – מזון לחיידקים הטובים במעי. החיידקים מתסיסים את הסיבים ומייצרים חומצות שומן קצרות שרשרת (SCFA) המפחיתות דלקתיות בגוף.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-slate-800 text-base text-emerald-800">2. שני סוגי הסיבים שאתה מקבל בתפריט הטבעוני</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-amber-50/60 rounded-xl border border-amber-200">
+                            <h4 class="font-bold text-amber-900 mb-1">סיבים מסיסים (Soluble Fiber)</h4>
+                            <p class="text-xs text-amber-950 mb-2">נמסים במים ויוצרים ג'ל שמאט את העיכול, מאזן את רמות הסוכר בדם ומוריד כולסטרול.</p>
+                            <p class="text-xs font-semibold">מקורות מעולים: שיבולת שועל, עדשים, חומוס, תפוחים, זרעי צ'יה, פשתן טחון, שעועית.</p>
+                        </div>
+                        <div class="p-4 bg-emerald-50/60 rounded-xl border border-emerald-200">
+                            <h4 class="font-bold text-emerald-900 mb-1">סיבים שאינם מסיסים (Insoluble Fiber)</h4>
+                            <p class="text-xs text-emerald-950 mb-2">מוסיפים נפח לצואה, מזרזים את מעבר המזון במעיים ומונעים עצירות.</p>
+                            <p class="text-xs font-semibold">מקורות מעולים: אורז מלא, קליפות ירקות ופירות, בורגול, סובין חיטה, אגוזים וזרעים.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-slate-800 text-base text-emerald-800 pt-2">3. כמה סיבים צריך ביום?</h3>
+                    <ul class="list-disc list-inside text-xs sm:text-sm space-y-1">
+                        <li><strong>נשים:</strong> 25 - 30 גרם ביום.</li>
+                        <li><strong>גברים:</strong> 35 - 45 גרם ביום.</li>
+                        <li><strong>בדיאטה ים-תיכונית טבעונית עשירה:</strong> קל להגיע ל-40-50 גרם סיבים ביום במידה ואוכלים קטניות ודגנים מלאים באופן סדיר!</li>
+                    </ul>
+
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900">
+                        <i class="fa-solid fa-circle-info ml-1 text-blue-600"></i> <strong>הערה חשובה למתחילים:</strong> אם אינך רגיל לצרוך סיבים בכמות גבוהה, יש להעלות את הכמות בהדרגה לאורך 2-3 שבועות ולהקפיד על שתייה מרובה של מים (8-10 כוסות ביום) למניעת גזים או אי-נוחות במערכת העיכול.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 4: DASH Principles & Mediterranean Guide -->
+        <section id="content-guide" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-heart-pulse text-rose-600 ml-2"></i>שילוב דיאטה ים-תיכונית עם דיאטת DASH
+                </h2>
+
+                <div class="space-y-4 text-slate-700 text-sm leading-relaxed">
+                    <p>
+                        דיאטת <strong>DASH</strong> (Dietary Approaches to Stop Hypertension) תוכננה במקור במיוחד להורדת לחץ דם, בעוד הדיאטה <strong>הים-תיכונית</strong> נחשבת לדיאטה הבריאה בעולם לאריכות ימים ולבריאות הלב. השילוב ביניהן בגרסה טבעונית מפיק את המקסימום משתי השיטות.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-4">
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="text-emerald-700 font-bold mb-1 flex items-center text-sm">
+                                <span class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs ml-2">1</span>
+                                דלת נתרן (Sodium)
+                            </div>
+                            <p class="text-xs text-slate-600">מגבילים נתרן ל-1500-2300 מ"ג ליום (כחצי כפית עד כפית מלח לכל היום כולל המלח שבמזונות מעובדים).</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="text-emerald-700 font-bold mb-1 flex items-center text-sm">
+                                <span class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs ml-2">2</span>
+                                עשירה באשלגן ומגנזיום
+                            </div>
+                            <p class="text-xs text-slate-600">אשלגן ומגנזיום מנטרלים את ההשפעה השלילית של נתרן ועוזרים להרחבת כלי דם. מצויים בשפע בעלים ירוקים, קטניות, אגוזים وبננות.</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="text-emerald-700 font-bold mb-1 flex items-center text-sm">
+                                <span class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs ml-2">3</span>
+                                שומן חד-בלתי רווי
+                            </div>
+                            <p class="text-xs text-slate-600">החלפת השומן הרווי בשומן בריא (שמן זית כתית מעולה, אבוקדו, טחינה מלאה, אגוזים) המגן על האנדותל (דופן כלי הדם).</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="text-emerald-700 font-bold mb-1 flex items-center text-sm">
+                                <span class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs ml-2">4</span>
+                                אפס מזון מעובד
+                            </div>
+                            <p class="text-xs text-slate-600">הימנעות מסוכרים מעובדים, ממתקים, שתייה מתוקה ומזונות תעשייתיים המכילים נתרן חבוי ורכיבים מעודדי דלקת.</p>
+                        </div>
+                    </div>
+
+                    <!-- Sodium reduction practical tricks -->
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl mt-4">
+                        <h4 class="font-bold text-amber-900 text-sm mb-2 flex items-center">
+                            <i class="fa-solid fa-lightbulb text-amber-600 ml-2"></i>איך להפחית נתרן בלי לאבד טעם?
+                        </h4>
+                        <ul class="text-xs space-y-1.5 text-amber-950 list-disc list-inside">
+                            <li><strong>השתמש בעשבי תיבול טריים:</strong> פטרוזיליה, כוזברה, אורגנו, טימין, רוזמרין ובזיליקום מוסיפים עומק טעם עשיר.</li>
+                            <li><strong>תבלינים עזים:</strong> כמומין, כורכום, פפריקה מעושנת, סומאק, פלפל שחור ושום כתוש.</li>
+                            <li><strong>חומציות מרעננת:</strong> סחיטת מיץ לימון טרי או חומץ תפוחים בסוף הבישול מעצימה את מליחות המזון הטבעית.</li>
+                            <li><strong>שטיפת שימורים:</strong> אם משתמשים בגרגירי חומוס או שעועית מקופסת שימורים, יש לשטוף אותם היטב במים כדי להסיר עד 40% מהנתרן.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p>אפליקציה לתזונה ים-תיכונית טבעונית | משלבת את עקרונות דיאטת DASH לבריאות הלב ולחץ הדם</p>
+            <p class="text-slate-500">המידע באפליקציה מיועד להעשרה ולמעקב אישי בלבד ואינו מהווה ייעוץ רפואי או תזונתי פרטני.</p>
+        </div>
+    </footer>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // Data presets for common Mediterranean Vegan foods
+        const PRESETS = {
+            lentils: { name: "עדשים מבושלות (1 כוס)", fiber: 15.6, sodium: 7, cat: "legume" },
+            chickpeas: { name: "חומוס מבושל (1 כוס)", fiber: 12.5, sodium: 11, cat: "legume" },
+            tahini: { name: "טחינה מלאה גולמית (2 כפות)", fiber: 4.0, sodium: 15, cat: "fat" },
+            olive_oil: { name: "שמן זית כתית מעולה (1 כף)", fiber: 0, sodium: 0, cat: "fat" },
+            oats: { name: "שיבולת שועל מלאה (1/2 כוס)", fiber: 8.0, sodium: 2, cat: "grain" },
+            quinoa: { name: "קינואה מבושלת (1 כוס)", fiber: 5.2, sodium: 13, cat: "grain" },
+            walnuts: { name: "אגוזי מלך (30 גרם)", fiber: 2.0, sodium: 1, cat: "fat" },
+            salad: { name: "סלט ים-תיכוני קצוץ", fiber: 4.5, sodium: 45, cat: "veg" },
+            tofu: { name: "טופו טבעי (100 גרם)", fiber: 2.3, sodium: 12, cat: "other" },
+            whole_bread: { name: "לחם דגנים מלאים (2 פרוסות)", fiber: 6.0, sodium: 220, cat: "grain" },
+            chia: { name: "זרעי צ'יה (1 כף)", fiber: 5.0, sodium: 2, cat: "fat" },
+            almonds: { name: "שקדים טבעיים (25 גרם)", fiber: 3.5, sodium: 1, cat: "fat" }
+        };
+
+        // Current Daily Log State
+        let dailyLog = [];
+        const FIBER_TARGET = 38; // grams (approx for men/active women)
+        const SODIUM_LIMIT = 1500; // mg (DASH strict guideline)
+
+        // Initialize App
+        window.onload = function() {
+            loadPresetData();
+            updateUI();
+        };
+
+        // Navigation Tab Switching
+        function switchTab(tabId) {
+            // Hide all sections
+            ['tracker', 'meals', 'fibers', 'guide'].forEach(id => {
+                const sec = document.getElementById(`content-${id}`);
+                const tab = document.getElementById(`tab-${id}`);
+                const mobTab = document.getElementById(`mob-tab-${id}`);
+                if (sec) sec.classList.add('hidden');
+                if (tab) {
+                    tab.classList.remove('bg-white', 'text-emerald-900', 'shadow');
+                    tab.classList.add('hover:bg-white/10', 'text-white');
+                }
+                if (mobTab) {
+                    mobTab.classList.remove('font-bold', 'text-white');
+                    mobTab.classList.add('text-emerald-200');
+                }
+            });
+
+            // Show selected section
+            const targetSec = document.getElementById(`content-${tabId}`);
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            const targetMobTab = document.getElementById(`mob-tab-${tabId}`);
+
+            if (targetSec) targetSec.classList.remove('hidden');
+            if (targetTab) {
+                targetTab.classList.add('bg-white', 'text-emerald-900', 'shadow');
+                targetTab.classList.remove('hover:bg-white/10', 'text-white');
+            }
+            if (targetMobTab) {
+                targetMobTab.classList.add('font-bold', 'text-white');
+                targetMobTab.classList.remove('text-emerald-200');
+            }
+        }
+
+        // Auto Populate Form based on Preset selection
+        function loadPresetData() {
+            const select = document.getElementById('preset-food-select');
+            const selectedVal = select.value;
+            if (selectedVal && PRESETS[selectedVal]) {
+                const item = PRESETS[selectedVal];
+                document.getElementById('food-name').value = item.name;
+                document.getElementById('food-fiber').value = item.fiber;
+                document.getElementById('food-sodium').value = item.sodium;
+                document.getElementById('food-category').value = item.cat;
+            }
+        }
+
+        // Add Item to Daily Log
+        function addFoodItem(e) {
+            e.preventDefault();
+            const name = document.getElementById('food-name').value;
+            const fiber = parseFloat(document.getElementById('food-fiber').value) || 0;
+            const sodium = parseInt(document.getElementById('food-sodium').value) || 0;
+            const category = document.getElementById('food-category').value;
+
+            const newItem = {
+                id: Date.now(),
+                name,
+                fiber,
+                sodium,
+                category
+            };
+
+            dailyLog.push(newItem);
+            
+            // Reset form
+            document.getElementById('add-food-form').reset();
+            document.getElementById('preset-food-select').value = "";
+
+            updateUI();
+        }
+
+        // Remove Item from Log
+        function removeFoodItem(id) {
+            dailyLog = dailyLog.filter(item => item.id !== id);
+            updateUI();
+        }
+
+        // Clear All Daily Items
+        function clearTodayLog() {
+            dailyLog = [];
+            updateUI();
+        }
+
+        // Update Dashboard Cards and Table
+        function updateUI() {
+            const tbody = document.getElementById('food-log-body');
+            tbody.innerHTML = '';
+
+            if (dailyLog.length === 0) {
+                tbody.innerHTML = `
+                    <tr id="empty-log-row">
+                        <td colspan="5" class="py-8 text-center text-slate-400 text-sm">
+                            טרם הוספת מאכלים היום. בחר מהרשימה או הזן מזון חדש.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                dailyLog.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 transition-colors';
+                    row.innerHTML = `
+                        <td class="py-3 px-3 font-medium text-slate-800">${escapeHtml(item.name)}</td>
+                        <td class="py-3 px-3 text-xs text-slate-500">${getCategoryLabel(item.category)}</td>
+                        <td class="py-3 px-3 text-center font-bold text-amber-600">${item.fiber}g</td>
+                        <td class="py-3 px-3 text-center font-bold text-slate-700">${item.sodium}mg</td>
+                        <td class="py-3 px-3 text-center">
+                            <button onclick="removeFoodItem(${item.id})" class="text-rose-400 hover:text-rose-600 p-1">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Calculate Totals
+            const totalFiber = dailyLog.reduce((sum, item) => sum + item.fiber, 0);
+            const totalSodium = dailyLog.reduce((sum, item) => sum + item.sodium, 0);
+
+            // Counts by category
+            const legumesCount = dailyLog.filter(i => i.category === 'legume').length;
+            const fatsCount = dailyLog.filter(i => i.category === 'fat').length;
+            const vegCount = dailyLog.filter(i => i.category === 'veg').length;
+
+            // Update Fiber Card
+            document.getElementById('fiber-count-text').innerText = totalFiber.toFixed(1);
+            const fiberPct = Math.min(100, Math.round((totalFiber / FIBER_TARGET) * 100));
+            const fiberBar = document.getElementById('fiber-progress');
+            fiberBar.style.width = fiberPct + '%';
+
+            const fiberFeedback = document.getElementById('fiber-feedback');
+            if (totalFiber >= FIBER_TARGET) {
+                fiberBar.className = "bg-emerald-500 h-3 rounded-full transition-all duration-500";
+                fiberFeedback.innerHTML = `<i class="fa-solid fa-circle-check ml-1 text-emerald-600"></i> מעולה! הגעת ליעד הסיבים היומי שלך (${FIBER_TARGET}g).`;
+                fiberFeedback.className = "text-xs text-emerald-700 mt-4 flex items-center font-medium";
+            } else {
+                fiberBar.className = "bg-amber-500 h-3 rounded-full transition-all duration-500";
+                fiberFeedback.innerHTML = `<i class="fa-solid fa-circle-info ml-1 text-amber-500"></i> עוד ${(FIBER_TARGET - totalFiber).toFixed(1)}g סיבים ליעד היומי.`;
+                fiberFeedback.className = "text-xs text-slate-500 mt-4 flex items-center";
+            }
+
+            // Update Sodium Card
+            document.getElementById('sodium-count-text').innerText = totalSodium;
+            const sodiumPct = Math.min(100, Math.round((totalSodium / SODIUM_LIMIT) * 100));
+            const sodiumBar = document.getElementById('sodium-progress');
+            sodiumBar.style.width = sodiumPct + '%';
+
+            const sodiumFeedback = document.getElementById('sodium-feedback');
+            if (totalSodium > SODIUM_LIMIT) {
+                sodiumBar.className = "bg-rose-500 h-3 rounded-full transition-all duration-500";
+                sodiumFeedback.innerHTML = `<i class="fa-solid fa-circle-exclamation ml-1 text-rose-600"></i> שים לב: חרגת ממגבלת הנתרן המומלצת ב-DASH (${SODIUM_LIMIT}mg).`;
+                sodiumFeedback.className = "text-xs text-rose-600 mt-4 flex items-center font-medium";
+            } else {
+                sodiumBar.className = "bg-emerald-500 h-3 rounded-full transition-all duration-500";
+                sodiumFeedback.innerHTML = `<i class="fa-solid fa-shield-halved ml-1 text-emerald-600"></i> רמת נתרן מצוינת לשמירה על לחץ דם תקין.`;
+                sodiumFeedback.className = "text-xs text-emerald-600 mt-4 flex items-center font-medium";
+            }
+
+            // Update Category Indicators
+            document.getElementById('legumes-count').innerText = `${legumesCount}/3 מנות`;
+            document.getElementById('fats-count').innerText = `${fatsCount}/3 מנות`;
+            document.getElementById('veg-count').innerText = `${vegCount}/6 מנות`;
+        }
+
+        // Helper: Category Labels
+        function getCategoryLabel(cat) {
+            switch(cat) {
+                case 'legume': return 'קטניות';
+                case 'grain': return 'דגנים מלאים';
+                case 'fat': return 'שומן בריא';
+                case 'veg': return 'ירקות/פירות';
+                default: return 'אחר';
+            }
+        }
+
+        // Helper: HTML Escaping
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+    </script>
+</body>
+</html>
